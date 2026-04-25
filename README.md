@@ -12,6 +12,16 @@ If you somehow still want to use this, there are multiple ways to include it in 
 ### Copying the source and header file
 The most obvious way is to just copy the source and header files into your project and include the header.
 ### Building static library
+### Makefile
+You can run `make` to build the library. It will create `liblogger.a` and `logger.h` files, which you'd need for your project.
+```shell
+make
+```
+
+You can also clean up using
+```shell
+make clean
+```
 #### Manual build
 To build a static library, you can run:
 ```shell
