@@ -26,8 +26,13 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifdef USE_SYSCALL
+#ifdef __linux__
 #include <sys/syscall.h>
 #include <unistd.h>
+#endif // __linux__
+#endif // USE_SYSCALL
 
 #include "logger.h"
 
@@ -81,9 +86,11 @@ int is_logging_type_enabled(enum logging_level type) {
     return type >= current_config.level;
 }
 
+#ifdef USE_SYSCALL
 static int __exec_write_stderr_syscall(const char* s, int slen) {
 	return syscall(SYS_write, STDERR_FILENO, s, slen);
 }
+#endif // USE_SYSCALL
 
 static int logging_vprintf(
 	enum logging_level logging_type,
@@ -109,6 +116,7 @@ static int logging_vprintf(
 	va_list args_clone;
 	va_copy(args_clone, args);
 
+#ifdef USE_SYSCALL
 	int print_s_len = vsnprintf(NULL, 0, extended_fmt, args_clone);
 
 	char print_s[print_s_len + 1];
@@ -119,6 +127,9 @@ static int logging_vprintf(
 		r = sr;
 	}
 	return r;
+#else
+	return vfprintf(stderr, extended_fmt, args);
+#endif // USE_SYSCALL
 }
 
 void logging_perror(enum logging_level logging_type, const char* prefix) {
