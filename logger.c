@@ -37,7 +37,7 @@
 #include "logger.h"
 
 struct logging_config_s current_config = {
-	.level      = NOTE,
+	.level      = LOGGER_NOTE,
 	.show_color = 0
 };
 
@@ -59,22 +59,22 @@ const char CRITICAL_COLOURED_LABEL[] = "\033[1;31mCRITICAL\033[0m";
 
 static const char* get_logging_label(enum logging_level logging_type) {
 	switch (logging_type) {
-	case DEBUG:
+	case LOGGER_DEBUG:
 		return current_config.show_color
 			? DEBUG_COLOURED_LABEL    : DEBUG_LABEL;
-	case INFO:
+	case LOGGER_INFO:
 		return current_config.show_color
 			? INFO_COLOURED_LABEL     : INFO_LABEL;
-	case NOTE:
+	case LOGGER_NOTE:
 		return current_config.show_color
 			? NOTE_COLOURED_LABEL     : NOTE_LABEL;
-	case WARNING:
+	case LOGGER_WARNING:
 		return current_config.show_color
 			? WARNING_COLOURED_LABEL  : WARNING_LABEL;
-	case ERROR:
+	case LOGGER_ERROR:
 		return current_config.show_color
 			? ERROR_COLOURED_LABEL    : ERROR_LABEL;
-	case CRITICAL:
+	case LOGGER_CRITICAL:
 		return current_config.show_color
 			? CRITICAL_COLOURED_LABEL : CRITICAL_LABEL;
 	}
@@ -153,71 +153,71 @@ void config_logging(struct logging_config_s config) {
 int debug_printf(const char* fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-	int ret = logging_vprintf(DEBUG, fmt, args);
+	int ret = logging_vprintf(LOGGER_DEBUG, fmt, args);
 	va_end(args);
 	return ret;
 }
 
 void debug_perror(const char* prefix) {
-	logging_perror(DEBUG, prefix);
+	logging_perror(LOGGER_DEBUG, prefix);
 }
 
 int info_printf(const char* fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-	int ret = logging_vprintf(INFO, fmt, args);
+	int ret = logging_vprintf(LOGGER_INFO, fmt, args);
 	va_end(args);
 	return ret;
 }
 
 void info_perror(const char* prefix) {
-	logging_perror(INFO, prefix);
+	logging_perror(LOGGER_INFO, prefix);
 }
 
 int note_printf(const char* fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-	int ret = logging_vprintf(NOTE, fmt, args);
+	int ret = logging_vprintf(LOGGER_NOTE, fmt, args);
 	va_end(args);
 	return ret;
 }
 
 void note_perror(const char* prefix) {
-	logging_perror(NOTE, prefix);
+	logging_perror(LOGGER_NOTE, prefix);
 }
 
 int warning_printf(const char* fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-	int ret = logging_vprintf(WARNING, fmt, args);
+	int ret = logging_vprintf(LOGGER_WARNING, fmt, args);
 	va_end(args);
 	return ret;
 }
 
 void warning_perror(const char* prefix) {
-	logging_perror(WARNING, prefix);
+	logging_perror(LOGGER_WARNING, prefix);
 }
 
 int error_printf(const char* fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-	int ret = logging_vprintf(ERROR, fmt, args);
+	int ret = logging_vprintf(LOGGER_ERROR, fmt, args);
 	va_end(args);
 	return ret;
 }
 
 void error_perror(const char* prefix) {
-	logging_perror(ERROR, prefix);
+	logging_perror(LOGGER_ERROR, prefix);
 }
 
 int critical_printf(const char* fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-	int ret = logging_vprintf(CRITICAL, fmt, args);
+	int ret = logging_vprintf(LOGGER_CRITICAL, fmt, args);
 	va_end(args);
 	return ret;
 }
 
 void critical_perror(const char* prefix) {
-	logging_perror(CRITICAL, prefix);
+	logging_perror(LOGGER_CRITICAL, prefix);
 }

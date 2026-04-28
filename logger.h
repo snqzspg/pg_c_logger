@@ -2,12 +2,12 @@
 #define LOGGER_H_INCLUDED
 
 enum logging_level {
-	DEBUG,
-	INFO,
-	NOTE,
-	WARNING,
-	ERROR,
-	CRITICAL
+	LOGGER_DEBUG,
+	LOGGER_INFO,
+	LOGGER_NOTE,
+	LOGGER_WARNING,
+	LOGGER_ERROR,
+	LOGGER_CRITICAL
 };
 
 struct logging_config_s {
