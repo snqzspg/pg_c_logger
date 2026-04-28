@@ -2,7 +2,7 @@
  * @file logger.c
  * @author Snqzs' PG (snqzspg@gmail.com)
  * @brief 
- * @version 1.1
+ * @version 1.0
  * @date 2026-04-24
  * 
  * @copyright Snqzs' PG (c) 2026
@@ -104,7 +104,7 @@ static int logging_vprintf(
 	const char* label               = get_logging_label(logging_type);
 	const int   extended_fmt_length = snprintf(NULL, 0, "[%s]%s", label, fmt);
 
-	char extended_fmt[extended_fmt_length + 1];
+	char  extended_fmt[extended_fmt_length + 1];
 	(void) snprintf(
 		extended_fmt,
 		extended_fmt_length + 1,
@@ -113,13 +113,11 @@ static int logging_vprintf(
 		fmt
 	);
 
-#ifdef USE_SYSCALL
 	va_list args_clone;
 	va_copy(args_clone, args);
 
+#ifdef USE_SYSCALL
 	int print_s_len = vsnprintf(NULL, 0, extended_fmt, args_clone);
-
-	va_end(args_clone);
 
 	char print_s[print_s_len + 1];
 	int r = vsnprintf(print_s, print_s_len + 1, extended_fmt, args);
@@ -128,12 +126,9 @@ static int logging_vprintf(
 	if (sr != 0) {
 		r = sr;
 	}
-	va_end(args);
 	return r;
 #else
-	int r = vfprintf(stderr, extended_fmt, args);
-	va_end(args);
-	return r;
+	return vfprintf(stderr, extended_fmt, args);
 #endif // USE_SYSCALL
 }
 
