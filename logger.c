@@ -2,7 +2,7 @@
  * @file logger.c
  * @author Snqzs' PG (snqzspg@gmail.com)
  * @brief 
- * @version 1.0
+ * @version 1.1
  * @date 2026-04-24
  * 
  * @copyright Snqzs' PG (c) 2026
@@ -113,11 +113,13 @@ static int logging_vprintf(
 		fmt
 	);
 
+#ifdef USE_SYSCALL
 	va_list args_clone;
 	va_copy(args_clone, args);
 
-#ifdef USE_SYSCALL
 	int print_s_len = vsnprintf(NULL, 0, extended_fmt, args_clone);
+
+	va_end(args_clone);
 
 	char print_s[print_s_len + 1];
 	int r = vsnprintf(print_s, print_s_len + 1, extended_fmt, args);
