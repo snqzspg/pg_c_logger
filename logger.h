@@ -16,6 +16,7 @@ struct logging_config_s {
 };
 
 void config_logging(struct logging_config_s config);
+void logging_cleanup(void);
 int is_logging_type_enabled(enum logging_level type);
 
 int debug_printf(const char* fmt, ...);

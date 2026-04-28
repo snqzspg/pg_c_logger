@@ -2,7 +2,7 @@
  * @file logger.c
  * @author Snqzs' PG (snqzspg@gmail.com)
  * @brief 
- * @version 1.1
+ * @version 1.2
  * @date 2026-04-24
  * 
  * @copyright Snqzs' PG (c) 2026
@@ -25,6 +25,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #ifdef USE_SYSCALL
@@ -40,6 +41,15 @@ struct logging_config_s current_config = {
 	.level      = LOGGER_NOTE,
 	.show_color = 0
 };
+
+static char*  __fmtted_txt_buffer  = NULL;
+static size_t __fmtted_txt_buf_cap = 0;
+
+#ifdef USE_SYSCALL
+static char*  __lbled_txt_buffer  = NULL;
+static size_t __lbled_txt_buf_cap = 0;
+#endif // USE_SYSCALL
+
 
 const char BLANK_LABEL   [] = "NOTSET";
 const char DEBUG_LABEL   [] = "DEBUG";
@@ -86,6 +96,59 @@ int is_logging_type_enabled(enum logging_level type) {
     return type >= current_config.level;
 }
 
+static void __expand_fmtted_buf_memory(size_t new_cap_fmtted) {
+	if (new_cap_fmtted <= __fmtted_txt_buf_cap) {
+		return;
+	}
+
+	char* new_mem;
+
+	if (__fmtted_txt_buffer == NULL) {
+		new_mem = (char*) malloc(new_cap_fmtted * sizeof(char));
+	} else {
+		new_mem = (char*) realloc(__fmtted_txt_buffer, new_cap_fmtted * sizeof(char));
+	}
+
+	if (new_mem != NULL) {
+		__fmtted_txt_buffer  = new_mem;
+		__fmtted_txt_buf_cap = new_cap_fmtted;
+	}
+}
+
+#ifdef USE_SYSCALL
+static void __expand_lbled_buf_memory(size_t new_cap) {
+	if (new_cap <= __lbled_txt_buf_cap) {
+		return;
+	}
+
+	char* new_mem;
+
+	if (__lbled_txt_buffer == NULL) {
+		new_mem = (char*) malloc(new_cap * sizeof(char));
+	} else {
+		new_mem = (char*) realloc(__lbled_txt_buffer, new_cap * sizeof(char));
+	}
+
+	if (new_mem != NULL) {
+		__lbled_txt_buffer  = new_mem;
+		__lbled_txt_buf_cap = new_cap;
+	}
+}
+#endif // USE_SYSCALL
+
+// Includes a space
+static const char __open_brackets[] = "([{< ";
+
+static int __is_an_open_bracket(char c) {
+	for (const char* c1 = __open_brackets; *c1 == '\0'; c1++) {
+		if (c == *c1) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 #ifdef USE_SYSCALL
 static int __exec_write_stderr_syscall(const char* s, int slen) {
 	return syscall(SYS_write, STDERR_FILENO, s, slen);
@@ -101,37 +164,62 @@ static int logging_vprintf(
 		return 0;
 	}
 
-	const char* label               = get_logging_label(logging_type);
-	const int   extended_fmt_length = snprintf(NULL, 0, "[%s]%s", label, fmt);
-
-	char  extended_fmt[extended_fmt_length + 1];
-	(void) snprintf(
-		extended_fmt,
-		extended_fmt_length + 1,
-		"[%s]%s",
-		label,
-		fmt
-	);
-
-#ifdef USE_SYSCALL
 	va_list args_clone;
 	va_copy(args_clone, args);
 
-	int print_s_len = vsnprintf(NULL, 0, extended_fmt, args_clone);
+	const char* label        = get_logging_label(logging_type);
+	const int fmtted_str_len = vsnprintf(NULL, 0, fmt, args_clone);
 
 	va_end(args_clone);
 
-	char print_s[print_s_len + 1];
-	int r = vsnprintf(print_s, print_s_len + 1, extended_fmt, args);
+	__expand_fmtted_buf_memory(fmtted_str_len + 1);
 
-	int sr = __exec_write_stderr_syscall(print_s, print_s_len);
+	if (__fmtted_txt_buf_cap < (size_t) fmtted_str_len + 1) {
+		return -1;
+	}
+
+	char* fmtted_str = __fmtted_txt_buffer;
+	int r = vsnprintf(fmtted_str, __fmtted_txt_buf_cap, fmt, args);
+
+#ifdef USE_SYSCALL
+	int labelled_text_len = snprintf(
+		NULL,
+		0,
+		"[%s]%s%s",
+		label,
+		__is_an_open_bracket(fmtted_str[0]) ? "" : " ",
+		fmtted_str
+	);
+
+	__expand_lbled_buf_memory(labelled_text_len + 1);
+	if (__lbled_txt_buf_cap < (size_t) labelled_text_len + 1) {
+		return -1;
+	}
+
+	(void) snprintf(
+		__lbled_txt_buffer,
+		__lbled_txt_buf_cap,
+		"[%s]%s%s",
+		label,
+		__is_an_open_bracket(fmtted_str[0]) ? "" : " ",
+		fmtted_str
+	);
+
+	int sr = __exec_write_stderr_syscall(__lbled_txt_buffer, labelled_text_len);
 	if (sr != 0) {
 		r = sr;
 	}
-	return r;
 #else
-	return vfprintf(stderr, extended_fmt, args);
+	(void) fprintf(
+		stderr,
+		"[%s]%s%s",
+		label,
+		__is_an_open_bracket(fmtted_str[0]) ? "" : " ",
+		fmtted_str
+	);
 #endif // USE_SYSCALL
+
+	return r;
 }
 
 void logging_perror(enum logging_level logging_type, const char* prefix) {
@@ -148,6 +236,22 @@ void logging_perror(enum logging_level logging_type, const char* prefix) {
 
 void config_logging(struct logging_config_s config) {
 	current_config = config;
+}
+
+void logging_cleanup(void) {
+	if (__fmtted_txt_buffer != NULL) {
+		free(__fmtted_txt_buffer);
+		__fmtted_txt_buffer  = NULL;
+		__fmtted_txt_buf_cap = 0;
+	}
+
+#ifdef USE_SYSCALL
+	if (__lbled_txt_buffer != NULL) {
+		free(__lbled_txt_buffer);
+		__lbled_txt_buffer  = NULL;
+		__lbled_txt_buf_cap = 0;
+	}
+#endif // USE_SYSCALL
 }
 
 int debug_printf(const char* fmt, ...) {
