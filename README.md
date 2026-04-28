@@ -21,7 +21,7 @@ You can also clean up using
 make clean
 ```
 
-Note that you can also compile a version that directly uses write system calls to write instead of using printf.
+Note that you can also compile a version that directly uses write system calls to write instead of using printf (sprintf is still used for format parsing).
 This still uses libc for string substitution.
 ```shell
 make BUILD_DEFS="-DUSE_SYSCALL"
