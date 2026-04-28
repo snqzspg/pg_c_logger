@@ -106,7 +106,10 @@ static void __expand_fmtted_buf_memory(size_t new_cap_fmtted) {
 	if (__fmtted_txt_buffer == NULL) {
 		new_mem = (char*) malloc(new_cap_fmtted * sizeof(char));
 	} else {
-		new_mem = (char*) realloc(__fmtted_txt_buffer, new_cap_fmtted * sizeof(char));
+		new_mem = (char*) realloc(
+			__fmtted_txt_buffer,
+			new_cap_fmtted * sizeof(char)
+		);
 	}
 
 	if (new_mem != NULL) {
@@ -140,7 +143,7 @@ static void __expand_lbled_buf_memory(size_t new_cap) {
 static const char __open_brackets[] = "([{< ";
 
 static int __is_an_open_bracket(char c) {
-	for (const char* c1 = __open_brackets; *c1 == '\0'; c1++) {
+	for (const char* c1 = __open_brackets; *c1 != '\0'; c1++) {
 		if (c == *c1) {
 			return 1;
 		}
